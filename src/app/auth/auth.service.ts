@@ -50,10 +50,16 @@ export class AuthService {
     });
   }
 
-  /** Registro de cuenta: `prompt=create` abre el formulario de alta del tenant (External ID). */
+  /**
+   * Registro de cuenta. `prompt=create` solo lo entiende External ID (ciamlogin.com), donde abre el formulario de
+   * alta. En un tenant workforce no es un valor valido: el registro lo ofrece la pantalla de Microsoft cuando la
+   * aplicacion esta asociada a un flujo de usuario de autoservicio, asi que se hace un inicio de sesion normal.
+   */
   async signUp(): Promise<void> {
     await this.run('No fue posible abrir el registro de cuenta.', async () => {
-      await firstValueFrom(this.msal.loginRedirect({ scopes: [...environment.entra.apiScopes], prompt: 'create' }));
+      const scopes = [...environment.entra.apiScopes];
+      const request = environment.entra.authority.includes('.ciamlogin.com') ? { scopes, prompt: 'create' } : { scopes };
+      await firstValueFrom(this.msal.loginRedirect(request));
     });
   }
 

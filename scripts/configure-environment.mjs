@@ -40,7 +40,7 @@ const replacements = [
   ['REPLACE_WITH_API_CLIENT_ID', values.ENTRA_API_CLIENT_ID],
 ];
 
-// Opcional: muestra el boton "Crear cuenta" (solo tiene sentido en un tenant External ID).
+// Opcional: muestra el boton "Crear cuenta" (External ID: alta con prompt=create; workforce: inicio de sesion normal).
 const signUpEnabled = read('ENTRA_SIGNUP_ENABLED').toLowerCase() === 'true';
 
 let source = readFileSync(TARGET, 'utf8');

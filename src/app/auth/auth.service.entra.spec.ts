@@ -108,10 +108,34 @@ describe('AuthService (Entra ID)', () => {
     expect(auth.busy()).toBe(false);
   });
 
-  it('starts the sign-up redirect with prompt=create', async () => {
-    const auth = createService();
-    await auth.signUp();
-    expect(msal.loginRedirect).toHaveBeenCalledWith({ scopes: [...environment.entra.apiScopes], prompt: 'create' });
+  describe('sign-up', () => {
+    const entra = environment.entra as { authority: string };
+    const originalAuthority = entra.authority;
+
+    afterEach(() => {
+      entra.authority = originalAuthority;
+    });
+
+    it('asks External ID for the sign-up form with prompt=create', async () => {
+      entra.authority = 'https://jdv.ciamlogin.com/';
+      const auth = createService();
+      await auth.signUp();
+      expect(msal.loginRedirect).toHaveBeenCalledWith({ scopes: [...environment.entra.apiScopes], prompt: 'create' });
+    });
+
+    it('does not send prompt=create to a workforce tenant, which does not accept it', async () => {
+      entra.authority = 'https://login.microsoftonline.com/tenant-1';
+      const auth = createService();
+      await auth.signUp();
+      expect(msal.loginRedirect).toHaveBeenCalledWith({ scopes: [...environment.entra.apiScopes] });
+    });
+
+    it('reports an error when the sign-up redirect cannot start', async () => {
+      msal.loginRedirect.mockReturnValue(throwError(() => new Error('interaction_in_progress')));
+      const auth = createService();
+      await auth.signUp();
+      expect(auth.error()).toContain('No fue posible abrir el registro');
+    });
   });
 
   it('reports an error when the redirect cannot start', async () => {
