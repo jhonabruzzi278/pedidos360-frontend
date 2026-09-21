@@ -1,0 +1,120 @@
+name: frontend
+
+# CI en cada push/PR (compila y ejecuta las pruebas). El despliegue a S3 + CloudFront es manual, o
+# automatico en push a main si la variable de repositorio AUTO_DEPLOY vale 'true'.
+#
+# Variables del repositorio para desplegar: ENTRA_CLIENT_ID, ENTRA_API_CLIENT_ID y ENTRA_TENANT_ID
+# (o ENTRA_AUTHORITY para un tenant External ID); opcional ENTRA_SIGNUP_ENABLED=true para mostrar
+# "Crear cuenta". La URL del API Gateway y el dominio de CloudFront se descubren solos: los crea el
+# workflow infra-deploy del repositorio backend.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Pruebas
+        run: npm test -- --no-watch
+
+      - name: Compilar (con marcadores sin sustituir, solo valida que compila)
+        run: npm run build
+
+  deploy:
+    needs: build
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && vars.AUTO_DEPLOY == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: jdv-frontend-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Descubrir bucket, CloudFront y API Gateway
+        run: |
+          if ! ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"; then
+            echo "::error::Credenciales invalidas o vencidas. Inicie el Learner Lab y ejecute infra/scripts/sync-aws-secrets.ps1 (repo backend)"
+            exit 1
+          fi
+          read -r DIST_ID DIST_DOMAIN < <(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Comment=='jdv-pedidos360-frontend'] | [0].[Id,DomainName]" --output text)
+          API_URL="$(aws apigatewayv2 get-apis --query "Items[?Name=='jdv-api'] | [0].ApiEndpoint" --output text)"
+          for value in "$DIST_ID" "$DIST_DOMAIN" "$API_URL"; do
+            if [ -z "$value" ] || [ "$value" = "None" ]; then
+              echo "::error::No se encontro la infraestructura (CloudFront/API Gateway). Ejecute primero infra-deploy en el repo backend."
+              exit 1
+            fi
+          done
+          {
+            echo "BUCKET=jdv-frontend-$ACCOUNT_ID"
+            echo "DIST_ID=$DIST_ID"
+            echo "FRONTEND_URL=https://$DIST_DOMAIN"
+            echo "API_BASE_URL=$API_URL"
+          } >> "$GITHUB_ENV"
+
+      - run: npm ci
+
+      - name: Configurar environment.production.ts
+        env:
+          ENTRA_TENANT_ID: ${{ vars.ENTRA_TENANT_ID }}
+          ENTRA_AUTHORITY: ${{ vars.ENTRA_AUTHORITY }}
+          ENTRA_CLIENT_ID: ${{ vars.ENTRA_CLIENT_ID }}
+          ENTRA_API_CLIENT_ID: ${{ vars.ENTRA_API_CLIENT_ID }}
+          ENTRA_SIGNUP_ENABLED: ${{ vars.ENTRA_SIGNUP_ENABLED }}
+        run: node scripts/configure-environment.mjs
+
+      - name: Compilar
+        run: npm run build
+
+      - name: Publicar en S3 e invalidar CloudFront
+        run: |
+          OUT=dist/frontend/browser
+          # Archivos con hash en el nombre: cache larga. index.html: siempre revalidado.
+          aws s3 sync "$OUT" "s3://$BUCKET" --delete --exclude index.html \
+            --cache-control "public,max-age=31536000,immutable" --only-show-errors
+          aws s3 cp "$OUT/index.html" "s3://$BUCKET/index.html" \
+            --cache-control "no-cache" --content-type "text/html; charset=utf-8" --only-show-errors
+          aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*" >/dev/null
+
+      - name: Resumen
+        run: |
+          {
+            echo '## Frontend desplegado'
+            echo "- URL: $FRONTEND_URL"
+            echo "- API: $API_BASE_URL"
+            echo "- Registre $FRONTEND_URL como URI de redireccion (SPA) en la aplicacion de Entra ID."
+          } >> "$GITHUB_STEP_SUMMARY"
