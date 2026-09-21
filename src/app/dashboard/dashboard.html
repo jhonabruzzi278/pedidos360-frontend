@@ -1,32 +1,74 @@
 <section class="page" aria-labelledby="dashboard-title">
   <div class="heading-row">
-    <div><p class="eyebrow">Comprobacion de integracion</p><h1 id="dashboard-title">Flujo local activo.</h1></div>
-    <button class="button secondary" type="button" (click)="logout()">Cerrar sesion</button>
+    <div><p class="eyebrow">Integración con el API</p><h1 id="dashboard-title">Órdenes y auditoría.</h1></div>
+    <button class="button secondary" type="button" (click)="load()" [disabled]="loading()">Actualizar</button>
   </div>
-  @if (loading()) {
-    <div class="status" role="status" aria-live="polite">Consultando los microservicios…</div>
-  } @else if (error()) {
-    <div class="error" role="alert">{{ error() }} <button class="retry" type="button" (click)="load()">Reintentar</button></div>
-  } @else {
-    <div class="summary" role="region" aria-label="Resumen de respuesta">
-      <div><strong>{{ orders().length }}</strong><span>ordenes</span></div>
-      <div><strong>{{ events().length }}</strong><span>eventos</span></div>
-      <div><strong>JWT</strong><span>validado por BFF</span></div>
+
+  <div class="summary" role="region" aria-label="Resumen de respuesta">
+    <div><strong>{{ orders().length }}</strong><span>órdenes</span></div>
+    <div><strong>{{ events().length }}</strong><span>eventos</span></div>
+    <div><strong>{{ roleText() }}</strong><span>rol en el token</span></div>
+  </div>
+
+  <section class="data-section" aria-labelledby="checks-title">
+    <h2 id="checks-title">Resultado de cada ruta</h2>
+    @if (results().length === 0) {
+      <p class="status" role="status" aria-live="polite">Consultando el API…</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Llamada</th><th>Código</th><th>Detalle</th></tr></thead>
+          <tbody>
+            @for (result of results(); track result.route) {
+              <tr>
+                <td><code>{{ result.route }}</code></td>
+                <td><span class="chip" [class.ok]="result.ok" [class.warn]="!result.ok">{{ result.status }} {{ statusLabel(result.status) }}</span></td>
+                <td>{{ result.message ?? 'Respuesta correcta' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <div class="actions">
+      <button class="button" type="button" (click)="createSampleOrder()">Crear orden de ejemplo (POST)</button>
+      <button class="button secondary" type="button" (click)="callWithoutToken()">Llamar sin token</button>
     </div>
+    <p class="hint">
+      Sin token la llamada responde 401 (en la nube lo resuelve API Gateway; en local, el BFF). El POST exige el scope
+      <code>orders.write</code> y el rol <code>admin</code>: con un usuario sin ese rol el BFF responde 403.
+    </p>
+  </section>
+
+  @if (!loading()) {
     <section class="data-section" aria-labelledby="orders-title">
-      <h2 id="orders-title">Ordenes de trabajo</h2>
-      @if (orders().length === 0) { <p class="empty">El servicio respondio correctamente, sin registros.</p> }
-      @else {
-        <div class="table-wrap"><table>
-          <thead><tr><th>ID</th><th>Cliente</th><th>Patente</th><th>Descripcion</th><th>Items</th><th>Total</th></tr></thead>
-          <tbody>@for (order of orders(); track order.id) {<tr><td>{{ order.id }}</td><td>{{ order.clientId }}</td><td>{{ order.licensePlate }}</td><td>{{ order.description }}</td><td>{{ order.itemCount }}</td><td>${{ order.total }}</td></tr>}</tbody>
-        </table></div>
+      <h2 id="orders-title">Órdenes de trabajo</h2>
+      @if (orders().length === 0) {
+        <p class="empty">Sin registros para mostrar.</p>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Cliente</th><th>Patente</th><th>Descripción</th><th>Ítems</th><th>Total</th></tr></thead>
+            <tbody>
+              @for (order of orders(); track order.id) {
+                <tr><td>{{ order.id }}</td><td>{{ order.clientId }}</td><td>{{ order.licensePlate }}</td><td>{{ order.description }}</td><td>{{ order.itemCount }}</td><td>${{ order.total }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
     </section>
     <section class="data-section" aria-labelledby="events-title">
-      <h2 id="events-title">Eventos de auditoria</h2>
-      @if (events().length === 0) { <p class="empty">El servicio respondio correctamente, sin registros.</p> }
-      @else { <ul>@for (event of events(); track event.id) {<li><strong>{{ event.eventType }}</strong><span>{{ event.workOrderId }}</span></li>}</ul> }
+      <h2 id="events-title">Eventos de auditoría</h2>
+      @if (events().length === 0) {
+        <p class="empty">Sin registros para mostrar.</p>
+      } @else {
+        <ul>
+          @for (event of events(); track event.id) {
+            <li><strong>{{ event.eventType }}</strong><span>{{ event.workOrderId }}</span></li>
+          }
+        </ul>
+      }
     </section>
   }
 </section>

@@ -6,6 +6,8 @@ export const environment = {
     clientId: 'REPLACE_WITH_ENTRA_CLIENT_ID',
     authority: 'https://login.microsoftonline.com/REPLACE_WITH_TENANT_ID',
     redirectUri: 'REPLACE_WITH_FRONTEND_URL',
+    // Muestra el boton "Crear cuenta" (prompt=create). Depende del tipo de tenant: ver README.
+    signUpEnabled: false,
     apiScopes: [
       'api://REPLACE_WITH_API_CLIENT_ID/orders.read',
       'api://REPLACE_WITH_API_CLIENT_ID/orders.write',

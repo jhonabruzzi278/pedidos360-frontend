@@ -1,7 +1,13 @@
 :host { display: block; min-height: 100vh; }
 .skip-link { position: fixed; left: 1rem; top: -4rem; z-index: 10; padding: .75rem 1rem; background: var(--ink); color: white; }
 .skip-link:focus { top: 1rem; }
-.site-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem clamp(1rem, 4vw, 4rem); border-bottom: 1px solid var(--line); background: var(--surface); }
+.site-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; padding: 1rem clamp(1rem, 4vw, 4rem); border-bottom: 1px solid var(--line); background: var(--surface); }
+.site-nav { display: flex; flex: 1; gap: 1.25rem; }
+.site-nav a { padding: .35rem 0; border-bottom: 2px solid transparent; color: var(--muted); font-weight: 700; text-decoration: none; }
+.site-nav a:hover { color: var(--ink); }
+.site-nav a.active { border-bottom-color: var(--accent); color: var(--ink); }
+.session { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.user { max-width: 14rem; overflow: hidden; font-size: .9rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .brand { display: inline-flex; align-items: center; gap: .75rem; color: var(--ink); text-decoration: none; font-weight: 700; }
 .brand-mark { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; background: var(--accent); color: white; font-size: .8rem; letter-spacing: .04em; }
 .environment { padding: .35rem .65rem; border: 1px solid var(--line); color: var(--muted); font-size: .8rem; }

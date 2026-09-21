@@ -1,12 +1,41 @@
 <section class="page login-shell" aria-labelledby="login-title">
   <div>
-    <p class="eyebrow">Base de validacion local</p>
+    <p class="eyebrow">{{ auth.mode === 'entra' ? 'Microsoft Entra ID' : 'Perfil local' }}</p>
     <h1 id="login-title">Una ruta segura hacia cada servicio.</h1>
-    <p class="intro">Esta pantalla usa un token local efimero para comprobar el BFF sin conectarse a Azure. El perfil de produccion queda preparado para MSAL y Entra ID.</p>
-    <button class="button" type="button" (click)="login()" [disabled]="auth.busy()">{{ auth.busy() ? 'Iniciando sesion…' : 'Entrar al entorno local' }}</button>
+    @if (auth.mode === 'entra') {
+      <p class="intro">
+        Inicia sesión con tu cuenta del tenant. La aplicación usa OpenID Connect con Authorization Code y PKCE, y
+        llama al API Gateway con el access token (JWT) que emite Entra ID.
+      </p>
+      <div class="actions">
+        <button class="button" type="button" (click)="auth.login()" [disabled]="auth.busy()">
+          {{ auth.busy() ? 'Redirigiendo…' : 'Iniciar sesión' }}
+        </button>
+        @if (auth.signUpEnabled) {
+          <button class="button secondary" type="button" (click)="auth.signUp()" [disabled]="auth.busy()">Crear cuenta</button>
+        }
+      </div>
+    } @else {
+      <p class="intro">
+        Esta pantalla usa un token local efímero para comprobar el BFF sin conectarse a Azure. Elige el rol para ver
+        cómo cambian los permisos.
+      </p>
+      <div class="actions">
+        <button class="button" type="button" (click)="auth.login('viewer')" [disabled]="auth.busy()">Entrar como viewer</button>
+        <button class="button secondary" type="button" (click)="auth.login('admin')" [disabled]="auth.busy()">Entrar como admin</button>
+      </div>
+    }
+    @if (auth.error(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
   </div>
-  <aside aria-label="Alcance de esta etapa">
-    <span>Ahora</span><strong>Angular → BFF → microservicios → H2</strong>
-    <span>Despues</span><strong>Entra ID → API Gateway → infraestructura cloud</strong>
+  <aside aria-label="Flujo de autenticación">
+    @if (auth.mode === 'entra') {
+      <span>Autenticación</span><strong>Angular → Entra ID (Authorization Code + PKCE) → JWT</strong>
+      <span>Consumo</span><strong>Angular → API Gateway (valida el JWT) → BFF → microservicios</strong>
+    } @else {
+      <span>Ahora</span><strong>Angular → BFF local → microservicios → H2</strong>
+      <span>En la nube</span><strong>Entra ID → API Gateway → EC2</strong>
+    }
   </aside>
 </section>

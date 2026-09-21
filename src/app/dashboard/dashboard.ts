@@ -1,31 +1,47 @@
-import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ApiClient } from '../api/api-client';
+import { ApiResult, AuditEvent, WorkOrder, statusLabel } from '../api/api.models';
 import { AuthService } from '../auth/auth.service';
-
-interface WorkOrder { id: string; clientId: string; licensePlate: string; description: string; total: number; itemCount: number; calculatedSubtotal: number; }
-interface AuditEvent { id: number; workOrderId: string; eventType: string; createdAt: string; }
 
 @Component({ selector: 'app-dashboard', templateUrl: './dashboard.html', styleUrl: './dashboard.scss' })
 export class Dashboard implements OnInit {
+  private readonly api = inject(ApiClient);
+  private readonly auth = inject(AuthService);
+
   readonly orders = signal<WorkOrder[]>([]);
   readonly events = signal<AuditEvent[]>([]);
   readonly loading = signal(true);
-  readonly error = signal('');
-  constructor(private http: HttpClient, readonly auth: AuthService) {}
-  ngOnInit(): void { void this.load(); }
+  /** Ultimo resultado de cada llamada, por ruta: es la evidencia de 200/201/401/403 que se muestra en pantalla. */
+  private readonly resultsByRoute = signal<Readonly<Record<string, ApiResult<unknown>>>>({});
+  readonly results = computed(() => Object.values(this.resultsByRoute()));
+  readonly roleText = computed(() => this.auth.session()?.roles.join(', ') || 'sin rol');
+  readonly statusLabel = statusLabel;
+
+  ngOnInit(): void {
+    void this.load();
+  }
 
   async load(): Promise<void> {
-    this.loading.set(true); this.error.set('');
-    try {
-      const [orders, events] = await Promise.all([
-        firstValueFrom(this.http.get<WorkOrder[]>(`${environment.apiBaseUrl}/api/work-orders`)),
-        firstValueFrom(this.http.get<AuditEvent[]>(`${environment.apiBaseUrl}/api/events`)),
-      ]);
-      this.orders.set(orders); this.events.set(events);
-    } catch { this.error.set('No fue posible consultar el BFF. Confirma que los tres procesos Spring Boot esten activos.'); }
-    finally { this.loading.set(false); }
+    this.loading.set(true);
+    const [orders, events] = await Promise.all([this.api.workOrders(), this.api.events()]);
+    this.record(orders);
+    this.record(events);
+    this.orders.set(orders.data ?? []);
+    this.events.set(events.data ?? []);
+    this.loading.set(false);
   }
-  logout(): void { void this.auth.logout(); }
+
+  async createSampleOrder(): Promise<void> {
+    const result = await this.api.createSampleOrder();
+    this.record(result);
+    if (result.ok) await this.load();
+  }
+
+  async callWithoutToken(): Promise<void> {
+    this.record(await this.api.workOrdersWithoutToken());
+  }
+
+  private record(result: ApiResult<unknown>): void {
+    this.resultsByRoute.update((current) => ({ ...current, [result.route]: result }));
+  }
 }

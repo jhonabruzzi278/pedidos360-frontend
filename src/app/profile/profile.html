@@ -1,0 +1,30 @@
+<section class="page" aria-labelledby="profile-title">
+  <p class="eyebrow">Sesión</p>
+  <h1 id="profile-title">Identidad y token.</h1>
+  @if (session(); as s) {
+    <dl class="facts">
+      <div><dt>Nombre</dt><dd>{{ s.name }}</dd></div>
+      <div><dt>Usuario</dt><dd>{{ s.username }}</dd></div>
+      <div><dt>Tenant</dt><dd>{{ s.tenantId ?? '—' }}</dd></div>
+      <div><dt>El token expira</dt><dd>{{ s.expiresAt ? (s.expiresAt | date: 'dd-MM-yyyy HH:mm:ss') : '—' }}</dd></div>
+      <div>
+        <dt>Roles (claim roles)</dt>
+        <dd>@for (role of s.roles; track role) {<span class="chip ok">{{ role }}</span>} @empty {<span class="chip warn">sin rol</span>}</dd>
+      </div>
+      <div>
+        <dt>Scopes (claim scp o scope)</dt>
+        <dd>@for (scope of s.scopes; track scope) {<span class="chip ok">{{ scope }}</span>} @empty {<span class="chip warn">sin scopes</span>}</dd>
+      </div>
+    </dl>
+    <h2>Claims del access token</h2>
+    <pre class="claims" tabindex="0">{{ claimsJson() }}</pre>
+    <div class="actions">
+      <button class="button secondary" type="button" (click)="copyToken()">Copiar access token</button>
+    </div>
+    <p class="hint" role="status">
+      {{ copyMessage() || 'El token es una credencial: úsalo solo para pruebas (Postman, curl) y no lo compartas.' }}
+    </p>
+  } @else {
+    <p class="status">No hay una sesión activa.</p>
+  }
+</section>

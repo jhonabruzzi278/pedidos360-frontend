@@ -4,6 +4,18 @@
     <span class="brand-mark" aria-hidden="true">P360</span>
     <span>Pedidos360</span>
   </a>
-  <span class="environment">Entorno local</span>
+  <nav class="site-nav" aria-label="Principal">
+    @if (auth.authenticated()) {
+      <a routerLink="/ordenes" routerLinkActive="active">Órdenes</a>
+      <a routerLink="/perfil" routerLinkActive="active">Perfil y token</a>
+    }
+  </nav>
+  <div class="session">
+    <span class="environment">{{ modeLabel }}</span>
+    @if (auth.session(); as session) {
+      <span class="user" [title]="session.username">{{ session.name }}</span>
+      <button class="button secondary compact" type="button" (click)="logout()">Cerrar sesión</button>
+    }
+  </div>
 </header>
 <main id="main-content"><router-outlet /></main>
