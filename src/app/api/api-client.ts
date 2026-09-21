@@ -1,18 +1,25 @@
-import { HttpBackend, HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpBackend, HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { AuditEvent, ApiResult, WorkOrder } from './api.models';
+import { withTamperedSignature } from '../auth/jwt';
+import { AuditEvent, ApiResult, CreateOrderRequest, WorkOrder } from './api.models';
 
 const WORK_ORDERS_URL = `${environment.apiBaseUrl}/api/work-orders`;
 const EVENTS_URL = `${environment.apiBaseUrl}/api/events`;
 
-/** Cuerpo del POST de la prueba: cumple los limites de CreateWorkOrderRequest del microservicio. */
-const SAMPLE_ORDER = {
-  clientId: 'CLI-DEMO',
-  licensePlate: 'AB1234',
-  description: 'Orden de prueba creada desde el frontend',
-  items: [{ concept: 'Cambio de aceite', quantity: 1, unitPrice: 25000 }],
+/**
+ * Orden de ejemplo de un taller: la carga el boton "Cargar ejemplo" del formulario y la usan las pruebas de
+ * seguridad (sin token, token alterado). Cumple los limites de CreateWorkOrderRequest del microservicio.
+ */
+export const SAMPLE_ORDER: CreateOrderRequest = {
+  clientId: 'CLI-0158',
+  licensePlate: 'JKLM45',
+  description: 'Cambio de pastillas de freno delanteras y revisión de discos',
+  items: [
+    { concept: 'Pastillas de freno delanteras', quantity: 1, unitPrice: 48900 },
+    { concept: 'Mano de obra frenos (horas)', quantity: 1.5, unitPrice: 22000 },
+  ],
 };
 
 function messageFrom(error: HttpErrorResponse): string {
@@ -42,24 +49,36 @@ export class ApiClient {
     return this.call('GET /api/events', this.http.get<AuditEvent[]>(EVENTS_URL, { observe: 'response' }));
   }
 
-  createSampleOrder(): Promise<ApiResult<WorkOrder>> {
-    return this.call('POST /api/work-orders', this.http.post<WorkOrder>(WORK_ORDERS_URL, SAMPLE_ORDER, { observe: 'response' }));
+  createOrder(order: CreateOrderRequest): Promise<ApiResult<WorkOrder>> {
+    return this.call('POST /api/work-orders', this.http.post<WorkOrder>(WORK_ORDERS_URL, order, { observe: 'response' }));
   }
 
-  workOrdersWithoutToken(): Promise<ApiResult<WorkOrder[]>> {
-    return this.call(
-      'GET /api/work-orders (sin token)',
-      this.withoutInterceptors.get<WorkOrder[]>(WORK_ORDERS_URL, { observe: 'response' }),
-    );
+  /** Las tres rutas sin Authorization: API Gateway (o el BFF en local) debe responder 401 en todas. */
+  withoutToken(): Promise<ApiResult<unknown>[]> {
+    return this.probeRoutes('sin token', new HttpHeaders());
+  }
+
+  /** Las tres rutas con un token real pero de firma alterada: el 401 demuestra que se verifica la firma. */
+  withTamperedToken(token: string): Promise<ApiResult<unknown>[]> {
+    return this.probeRoutes('token alterado', new HttpHeaders({ Authorization: `Bearer ${withTamperedSignature(token)}` }));
+  }
+
+  private probeRoutes(note: string, headers: HttpHeaders): Promise<ApiResult<unknown>[]> {
+    const options = { observe: 'response' as const, headers };
+    return Promise.all([
+      this.call(`GET /api/work-orders (${note})`, this.withoutInterceptors.get<WorkOrder[]>(WORK_ORDERS_URL, options)),
+      this.call(`GET /api/events (${note})`, this.withoutInterceptors.get<AuditEvent[]>(EVENTS_URL, options)),
+      this.call(`POST /api/work-orders (${note})`, this.withoutInterceptors.post<WorkOrder>(WORK_ORDERS_URL, SAMPLE_ORDER, options)),
+    ]);
   }
 
   private async call<T>(route: string, request: Observable<HttpResponse<T>>): Promise<ApiResult<T>> {
     try {
       const response = await firstValueFrom(request);
-      return { route, status: response.status, ok: true, data: response.body, message: null };
+      return { route, status: response.status, ok: true, data: response.body, message: null, body: response.body };
     } catch (error) {
       if (error instanceof HttpErrorResponse) {
-        return { route, status: error.status, ok: false, data: null, message: messageFrom(error) };
+        return { route, status: error.status, ok: false, data: null, message: messageFrom(error), body: error.error };
       }
       throw error;
     }

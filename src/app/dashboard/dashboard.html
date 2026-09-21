@@ -10,36 +10,6 @@
     <div><strong>{{ roleText() }}</strong><span>rol en el token</span></div>
   </div>
 
-  <section class="data-section" aria-labelledby="checks-title">
-    <h2 id="checks-title">Resultado de cada ruta</h2>
-    @if (results().length === 0) {
-      <p class="status" role="status" aria-live="polite">Consultando el API…</p>
-    } @else {
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Llamada</th><th>Código</th><th>Detalle</th></tr></thead>
-          <tbody>
-            @for (result of results(); track result.route) {
-              <tr>
-                <td><code>{{ result.route }}</code></td>
-                <td><span class="chip" [class.ok]="result.ok" [class.warn]="!result.ok">{{ result.status }} {{ statusLabel(result.status) }}</span></td>
-                <td>{{ result.message ?? 'Respuesta correcta' }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
-    <div class="actions">
-      <button class="button" type="button" (click)="createSampleOrder()">Crear orden de ejemplo (POST)</button>
-      <button class="button secondary" type="button" (click)="callWithoutToken()">Llamar sin token</button>
-    </div>
-    <p class="hint">
-      Sin token la llamada responde 401 (en la nube lo resuelve API Gateway; en local, el BFF). El POST exige el scope
-      <code>orders.write</code> y el rol <code>admin</code>: con un usuario sin ese rol el BFF responde 403.
-    </p>
-  </section>
-
   @if (!loading()) {
     <section class="data-section" aria-labelledby="orders-title">
       <h2 id="orders-title">Órdenes de trabajo</h2>
@@ -48,16 +18,28 @@
       } @else {
         <div class="table-wrap">
           <table>
-            <thead><tr><th>ID</th><th>Cliente</th><th>Patente</th><th>Descripción</th><th>Ítems</th><th>Total</th></tr></thead>
+            <thead><tr><th>ID</th><th>Cliente</th><th>Patente</th><th>Descripción</th><th>Ítems</th><th class="num">Total</th></tr></thead>
             <tbody>
               @for (order of orders(); track order.id) {
-                <tr><td>{{ order.id }}</td><td>{{ order.clientId }}</td><td>{{ order.licensePlate }}</td><td>{{ order.description }}</td><td>{{ order.itemCount }}</td><td>${{ order.total }}</td></tr>
+                <tr><td>{{ order.id }}</td><td>{{ order.clientId }}</td><td>{{ order.licensePlate }}</td><td>{{ order.description }}</td><td>{{ order.itemCount }}</td><td class="num">{{ formatClp(order.total) }}</td></tr>
               }
             </tbody>
           </table>
         </div>
       }
     </section>
+  }
+
+  <section class="data-section" aria-labelledby="new-order-title">
+    <h2 id="new-order-title">Nueva orden de trabajo</h2>
+    <p class="hint">
+      El POST pasa por API Gateway y el BFF. Exige el scope <code>orders.write</code> y el rol <code>admin</code>: con un
+      usuario sin ese rol el BFF responde 403 y la orden no se crea.
+    </p>
+    <app-new-order (created)="onCreated($event)" />
+  </section>
+
+  @if (!loading()) {
     <section class="data-section" aria-labelledby="events-title">
       <h2 id="events-title">Eventos de auditoría</h2>
       @if (events().length === 0) {
@@ -71,4 +53,35 @@
       }
     </section>
   }
+
+  <section class="data-section" aria-labelledby="checks-title">
+    <h2 id="checks-title">Resultado de cada ruta</h2>
+    @if (results().length === 0) {
+      <p class="status" role="status" aria-live="polite">Consultando el API…</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Llamada</th><th>Código</th><th>Detalle</th><th>Respuesta</th></tr></thead>
+          <tbody>
+            @for (result of results(); track result.route) {
+              <tr>
+                <td><code>{{ result.route }}</code></td>
+                <td><span class="chip" [class.ok]="result.ok" [class.warn]="!result.ok">{{ result.status }} {{ statusLabel(result.status) }}</span></td>
+                <td>{{ result.message ?? 'Respuesta correcta' }}</td>
+                <td><details><summary>Ver JSON</summary><pre>{{ bodyText(result) }}</pre></details></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <div class="actions">
+      <button class="button secondary" type="button" (click)="callWithoutToken()">Llamar sin token</button>
+      <button class="button secondary" type="button" (click)="callWithTamperedToken()">Llamar con token alterado</button>
+    </div>
+    <p class="hint">
+      «Sin token» y «Token alterado» prueban las tres rutas y las tres deben responder 401: en la nube lo resuelve API
+      Gateway (emisor, audiencia, firma y vigencia); en local, el BFF.
+    </p>
+  </section>
 </section>

@@ -1,0 +1,28 @@
+.order-form { display: grid; gap: 1rem; padding: 1.25rem; border: 1px solid var(--line); background: var(--surface); }
+label { display: grid; gap: .3rem; align-content: start; }
+label > span, legend, .line-total span { color: var(--muted); font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+label em { font-style: normal; font-weight: 500; text-transform: none; letter-spacing: 0; }
+input { width: 100%; min-height: 2.5rem; padding: .5rem .65rem; border: 1px solid var(--line); border-radius: 0; background: white; color: var(--ink); }
+input:focus-visible { outline: 3px solid #e19c24; outline-offset: 1px; }
+input.ng-invalid.ng-touched { border-color: var(--danger); }
+fieldset { display: grid; gap: .75rem; margin: 0; padding: 0; border: 0; }
+legend { padding: 0; margin-bottom: .5rem; }
+.row { display: grid; gap: .75rem; }
+.row.two { grid-template-columns: 1fr 1fr; }
+.row.item { grid-template-columns: minmax(12rem, 3fr) minmax(6rem, 1fr) minmax(9rem, 1.4fr) minmax(7rem, 1fr) auto; align-items: start; padding-top: .75rem; border-top: 1px solid var(--line); }
+.row.item > .button { align-self: end; }
+.line-total { display: grid; gap: .3rem; align-content: start; }
+.line-total strong { display: flex; align-items: center; min-height: 2.5rem; }
+.field-error { color: var(--danger); font-size: .8rem; }
+.submit-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding-top: .75rem; border-top: 1px solid var(--line); }
+.total { margin: 0; font-size: 1.05rem; }
+.total strong { margin-left: .5rem; font-size: 1.5rem; }
+.actions { margin: 0; }
+.outcome { margin: 0; padding: .85rem 1rem; border-left: 4px solid var(--line); }
+.outcome.ok { border-color: var(--accent); background: #e7f3ee; color: var(--accent-strong); }
+.outcome.fail { border-color: var(--danger); background: #fff7ed; color: #7c2d12; }
+@media (max-width: 760px) {
+  .row.two, .row.item { grid-template-columns: 1fr 1fr; }
+  .row.item .concept { grid-column: 1 / -1; }
+}
+@media (max-width: 480px) { .row.two, .row.item { grid-template-columns: 1fr; } }

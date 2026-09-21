@@ -43,3 +43,16 @@ export function expiryFromClaims(claims: TokenClaims): Date | null {
   const exp = claims['exp'];
   return typeof exp === 'number' && Number.isFinite(exp) ? new Date(exp * 1000) : null;
 }
+
+/**
+ * Devuelve el mismo token con la firma alterada: los claims siguen intactos, pero la firma ya no corresponde.
+ * Sirve para demostrar que el API Manager verifica la firma y no solo la forma del token. Se cambia el primer
+ * caracter de la firma porque el ultimo lleva bits de relleno y podria decodificar igual.
+ */
+export function withTamperedSignature(token: string): string {
+  const segments = token.split('.');
+  if (segments.length !== 3 || segments[2] === '') return `${token}x`;
+  const [header, payload, signature] = segments;
+  const swapped = signature[0] === 'A' ? 'B' : 'A';
+  return `${header}.${payload}.${swapped}${signature.slice(1)}`;
+}

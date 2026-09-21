@@ -9,6 +9,10 @@ table { width: 100%; border-collapse: collapse; text-align: left; }
 th, td { padding: .85rem 1rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
 th { color: var(--muted); font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; }
 tbody tr:last-child td { border-bottom: 0; }
+td { vertical-align: top; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+summary { cursor: pointer; font-weight: 700; }
+pre { max-width: 26rem; max-height: 14rem; margin: .5rem 0 0; overflow: auto; white-space: pre-wrap; word-break: break-word; font-size: .78rem; }
 ul { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
 li { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--line); }
 li span, .empty, .status { color: var(--muted); }

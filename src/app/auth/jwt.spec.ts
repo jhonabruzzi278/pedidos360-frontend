@@ -1,5 +1,5 @@
 import { makeJwt } from '../testing/jwt-fixtures';
-import { decodeJwtPayload, expiryFromClaims, rolesFromClaims, scopesFromClaims } from './jwt';
+import { decodeJwtPayload, expiryFromClaims, rolesFromClaims, scopesFromClaims, withTamperedSignature } from './jwt';
 
 describe('decodeJwtPayload', () => {
   it('returns the payload of a well-formed token', () => {
@@ -77,5 +77,29 @@ describe('expiryFromClaims', () => {
     expect(expiryFromClaims({})).toBeNull();
     expect(expiryFromClaims({ exp: '1800000000' })).toBeNull();
     expect(expiryFromClaims({ exp: Number.NaN })).toBeNull();
+  });
+});
+
+describe('withTamperedSignature', () => {
+  it('keeps header and payload and changes only the signature', () => {
+    const token = 'aaa.bbb.Ccc';
+    const tampered = withTamperedSignature(token);
+    expect(tampered).not.toBe(token);
+    expect(tampered.split('.').slice(0, 2)).toEqual(['aaa', 'bbb']);
+    expect(tampered.split('.')[2]).toHaveLength(3);
+    expect(tampered.split('.')[2]).not.toBe('Ccc');
+  });
+
+  it('keeps the claims readable', () => {
+    const token = makeJwt({ sub: 'u1' });
+    expect(decodeJwtPayload(withTamperedSignature(token))).toEqual({ sub: 'u1' });
+  });
+
+  it('alters a signature that starts with A as well', () => {
+    expect(withTamperedSignature('h.p.Axyz')).toBe('h.p.Bxyz');
+  });
+
+  it('still changes a token that is not a JWT', () => {
+    expect(withTamperedSignature('no-es-jwt')).not.toBe('no-es-jwt');
   });
 });
