@@ -1,0 +1,32 @@
+<section class="page" aria-labelledby="dashboard-title">
+  <div class="heading-row">
+    <div><p class="eyebrow">Comprobacion de integracion</p><h1 id="dashboard-title">Flujo local activo.</h1></div>
+    <button class="button secondary" type="button" (click)="logout()">Cerrar sesion</button>
+  </div>
+  @if (loading()) {
+    <div class="status" role="status" aria-live="polite">Consultando los microservicios…</div>
+  } @else if (error()) {
+    <div class="error" role="alert">{{ error() }} <button class="retry" type="button" (click)="load()">Reintentar</button></div>
+  } @else {
+    <div class="summary" role="region" aria-label="Resumen de respuesta">
+      <div><strong>{{ orders().length }}</strong><span>ordenes</span></div>
+      <div><strong>{{ events().length }}</strong><span>eventos</span></div>
+      <div><strong>JWT</strong><span>validado por BFF</span></div>
+    </div>
+    <section class="data-section" aria-labelledby="orders-title">
+      <h2 id="orders-title">Ordenes de trabajo</h2>
+      @if (orders().length === 0) { <p class="empty">El servicio respondio correctamente, sin registros.</p> }
+      @else {
+        <div class="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Cliente</th><th>Patente</th><th>Descripcion</th><th>Items</th><th>Total</th></tr></thead>
+          <tbody>@for (order of orders(); track order.id) {<tr><td>{{ order.id }}</td><td>{{ order.clientId }}</td><td>{{ order.licensePlate }}</td><td>{{ order.description }}</td><td>{{ order.itemCount }}</td><td>${{ order.total }}</td></tr>}</tbody>
+        </table></div>
+      }
+    </section>
+    <section class="data-section" aria-labelledby="events-title">
+      <h2 id="events-title">Eventos de auditoria</h2>
+      @if (events().length === 0) { <p class="empty">El servicio respondio correctamente, sin registros.</p> }
+      @else { <ul>@for (event of events(); track event.id) {<li><strong>{{ event.eventType }}</strong><span>{{ event.workOrderId }}</span></li>}</ul> }
+    </section>
+  }
+</section>
