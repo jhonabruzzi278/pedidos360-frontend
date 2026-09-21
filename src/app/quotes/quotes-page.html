@@ -1,0 +1,59 @@
+<section class="page" aria-labelledby="quotes-title">
+  <div class="heading-row">
+    <div>
+      <p class="eyebrow">Taller</p>
+      <h1 id="quotes-title">Cotizaciones</h1>
+      <p class="lead">Genera cotizaciones para tus clientes, revísalas y descárgalas en PDF.</p>
+    </div>
+  </div>
+
+  <app-access-card
+    [access]="access()"
+    [admin]="isAdmin()"
+    [busy]="accessBusy()"
+    (requested)="requestAccess()"
+    (refreshed)="refreshAccess()"
+  />
+
+  @if (preview(); as quote) {
+    <div class="block">
+      <app-quote-preview [quote]="quote" (closed)="closePreview()" />
+    </div>
+  }
+
+  <section class="block" aria-labelledby="new-quote-title">
+    <h2 id="new-quote-title">Nueva cotización</h2>
+    <app-quote-form [accessStatus]="isAdmin() ? 'APPROVED' : accessStatus()" (created)="onCreated($event)" (accessRequested)="requestAccess()" />
+  </section>
+
+  <section class="block" aria-labelledby="issued-title">
+    <h2 id="issued-title">Cotizaciones emitidas</h2>
+    @if (loading()) {
+      <p class="status" role="status">Cargando cotizaciones…</p>
+    } @else if (loadFailed()) {
+      <p class="error" role="alert">No pudimos cargar las cotizaciones. Actualiza la página o inténtalo en unos minutos.</p>
+    } @else if (quotes().length === 0) {
+      <p class="empty">Todavía no hay cotizaciones emitidas.</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>N°</th><th>Cliente</th><th>Patente</th><th>Trabajo</th><th class="num">Total</th><th><span class="sr-only">Acciones</span></th></tr>
+          </thead>
+          <tbody>
+            @for (quote of sortedQuotes(); track quote.id) {
+              <tr>
+                <td class="nowrap"><strong>{{ quoteNumber(quote.id) }}</strong></td>
+                <td class="nowrap">{{ quote.clientId }}</td>
+                <td class="nowrap">{{ quote.licensePlate }}</td>
+                <td>{{ quote.description }}</td>
+                <td class="num">{{ formatClp(quote.total) }}</td>
+                <td class="nowrap"><button class="button secondary compact" type="button" (click)="open(quote)" [attr.aria-label]="'Ver la cotización ' + quoteNumber(quote.id)">Ver</button></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</section>

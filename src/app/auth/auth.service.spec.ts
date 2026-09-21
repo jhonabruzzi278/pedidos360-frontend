@@ -59,14 +59,14 @@ describe('AuthService (local profile)', () => {
     expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 
-  it('logs in with the requested role and navigates to the orders page', async () => {
+  it('logs in with the requested role and navigates to the quotes page', async () => {
     const pending = auth.login('admin');
     const request = http.expectOne(`${environment.apiBaseUrl}/dev/token?role=admin`);
     expect(request.request.method).toBe('POST');
     request.flush({ accessToken: adminToken() });
     await pending;
     expect(auth.session()?.roles).toEqual(['admin']);
-    expect(navigate).toHaveBeenCalledWith('/ordenes');
+    expect(navigate).toHaveBeenCalledWith('/cotizaciones');
     expect(auth.busy()).toBe(false);
   });
 

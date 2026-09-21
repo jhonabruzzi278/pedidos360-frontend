@@ -1,0 +1,15 @@
+.heading-row { margin-bottom: 1.5rem; }
+h1 { max-width: none; margin-bottom: .5rem; font-size: clamp(2rem, 5vw, 3rem); }
+.lead { max-width: 60ch; margin: 0; color: var(--muted); font-size: 1.05rem; }
+.block { margin-top: 2.25rem; }
+.block h2 { margin-bottom: 1rem; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+th, td { padding: .85rem 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { color: var(--muted); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+tbody tr:hover { background: #f7f5ef; }
+tbody tr:last-child td { border-bottom: 0; }
+.nowrap { white-space: nowrap; }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.empty, .status { padding: 2rem 0; color: var(--muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

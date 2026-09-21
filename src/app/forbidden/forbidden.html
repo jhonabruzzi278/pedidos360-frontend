@@ -1,12 +1,12 @@
 <section class="page" aria-labelledby="forbidden-title">
-  <p class="eyebrow">Acceso denegado</p>
-  <h1 id="forbidden-title">Tu token no alcanza para esta sección.</h1>
-  <p class="intro">La sesión es válida, pero los claims del token no incluyen lo que la ruta exige.</p>
-  @if (missingScopes.length > 0) {
-    <p>Scopes que faltan: @for (scope of missingScopes; track scope) {<span class="chip warn">{{ scope }}</span>}</p>
-  }
+  <p class="eyebrow">Acceso restringido</p>
+  <h1 id="forbidden-title">No tienes acceso a esta sección.</h1>
+  <p class="intro">Tu sesión es válida, pero tu cuenta no tiene los permisos que esta sección exige.</p>
   @if (missingRoles.length > 0) {
-    <p>Se requiere alguno de estos roles: @for (role of missingRoles; track role) {<span class="chip warn">{{ role }}</span>}</p>
+    <p>Solo para quienes tengan el rol: @for (role of missingRoles; track role) {<span class="chip warn">{{ role }}</span>}</p>
   }
-  <a class="button secondary" routerLink="/perfil">Ver mi token</a>
+  @if (missingScopes.length > 0) {
+    <p>Permisos que faltan en tu sesión: @for (scope of missingScopes; track scope) {<span class="chip warn">{{ scope }}</span>}</p>
+  }
+  <a class="button secondary" routerLink="/cotizaciones">Volver a cotizaciones</a>
 </section>

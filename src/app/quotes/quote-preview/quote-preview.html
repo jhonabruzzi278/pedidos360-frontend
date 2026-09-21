@@ -1,0 +1,68 @@
+<section class="preview" aria-labelledby="preview-title">
+  <div class="preview-bar">
+    <div>
+      <p class="eyebrow">Vista previa</p>
+      <h2 id="preview-title">Cotización N° {{ document().number }}</h2>
+    </div>
+    <div class="actions">
+      <button class="button secondary" type="button" (click)="closed.emit()">Cerrar</button>
+      <button class="button" type="button" (click)="download()" [disabled]="downloading()">
+        {{ downloading() ? 'Preparando PDF…' : 'Descargar PDF' }}
+      </button>
+    </div>
+  </div>
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  <article class="sheet" aria-label="Documento de la cotización">
+    <header class="sheet-head">
+      <div class="company">
+        <strong>{{ company.name }}</strong>
+        <span>{{ company.tagline }}</span>
+      </div>
+      <div class="doc-title">
+        <span class="doc-kind">COTIZACIÓN</span>
+        <strong>N° {{ document().number }}</strong>
+        <span>Emitida el {{ document().issuedOn }}</span>
+      </div>
+    </header>
+
+    <dl class="meta">
+      <div><dt>Cliente</dt><dd>{{ document().clientId }}</dd></div>
+      <div><dt>Vehículo (patente)</dt><dd>{{ document().licensePlate }}</dd></div>
+      <div><dt>Emitida por</dt><dd>{{ document().issuedBy }}</dd></div>
+      <div><dt>Válida hasta</dt><dd>{{ document().validUntil }}</dd></div>
+    </dl>
+
+    @if (document().description; as description) {
+      <div class="work">
+        <h3>Trabajo a realizar</h3>
+        <p>{{ description }}</p>
+      </div>
+    }
+
+    <table>
+      <thead>
+        <tr><th>Concepto</th><th class="num">Cantidad</th><th class="num">Precio unitario</th><th class="num">Subtotal</th></tr>
+      </thead>
+      <tbody>
+        @for (line of document().lines; track $index) {
+          <tr>
+            <td>{{ line.concept }}</td>
+            <td class="num">{{ line.quantity }}</td>
+            <td class="num">{{ line.unitPrice }}</td>
+            <td class="num">{{ line.subtotal }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <span>IVA incluido (19 %): {{ document().vatIncluded }}</span>
+      <strong>Total: {{ document().total }}</strong>
+    </div>
+
+    <footer>Cotización válida por {{ document().validityDays }} días. Valores en pesos chilenos (CLP), IVA incluido.</footer>
+  </article>
+</section>

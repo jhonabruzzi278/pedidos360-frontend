@@ -1,11 +1,11 @@
 <section class="page login-shell" aria-labelledby="login-title">
   <div>
-    <p class="eyebrow">{{ auth.mode === 'entra' ? 'Microsoft Entra ID' : 'Perfil local' }}</p>
-    <h1 id="login-title">Una ruta segura hacia cada servicio.</h1>
+    <p class="eyebrow">Cotizador para talleres</p>
+    <h1 id="login-title">Cotizaciones claras para tus clientes.</h1>
     @if (auth.mode === 'entra') {
       <p class="intro">
-        Inicia sesión con tu cuenta del tenant. La aplicación usa OpenID Connect con Authorization Code y PKCE, y
-        llama al API Gateway con el access token (JWT) que emite Entra ID.
+        Genera cotizaciones de mantención y reparación, revísalas antes de enviarlas y descárgalas en PDF. Inicia sesión
+        con tu cuenta para empezar, o crea una si aún no tienes.
       </p>
       <div class="actions">
         <button class="button" type="button" (click)="auth.login()" [disabled]="auth.busy()">
@@ -17,25 +17,21 @@
       </div>
     } @else {
       <p class="intro">
-        Esta pantalla usa un token local efímero para comprobar el BFF sin conectarse a Azure. Elige el rol para ver
-        cómo cambian los permisos.
+        Entorno de desarrollo: elige con qué perfil entrar. El usuario debe pedir acceso al administrador para
+        generar cotizaciones.
       </p>
       <div class="actions">
-        <button class="button" type="button" (click)="auth.login('viewer')" [disabled]="auth.busy()">Entrar como viewer</button>
-        <button class="button secondary" type="button" (click)="auth.login('admin')" [disabled]="auth.busy()">Entrar como admin</button>
+        <button class="button" type="button" (click)="auth.login('viewer')" [disabled]="auth.busy()">Entrar como usuario</button>
+        <button class="button secondary" type="button" (click)="auth.login('admin')" [disabled]="auth.busy()">Entrar como administrador</button>
       </div>
     }
     @if (auth.error(); as message) {
       <p class="error" role="alert">{{ message }}</p>
     }
   </div>
-  <aside aria-label="Flujo de autenticación">
-    @if (auth.mode === 'entra') {
-      <span>Autenticación</span><strong>Angular → Entra ID (Authorization Code + PKCE) → JWT</strong>
-      <span>Consumo</span><strong>Angular → API Gateway (valida el JWT) → BFF → microservicios</strong>
-    } @else {
-      <span>Ahora</span><strong>Angular → BFF local → microservicios → H2</strong>
-      <span>En la nube</span><strong>Entra ID → API Gateway → EC2</strong>
-    }
+  <aside aria-label="Cómo funciona">
+    <span>1 · Solicita acceso</span><strong>El administrador autoriza quién puede generar cotizaciones.</strong>
+    <span>2 · Genera</span><strong>Repuestos y mano de obra, con el total en pesos chilenos.</strong>
+    <span>3 · Revisa y descarga</span><strong>Vista previa para el cliente y PDF listo para enviar.</strong>
   </aside>
 </section>

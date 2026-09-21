@@ -1,0 +1,11 @@
+.card { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1rem 1.25rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-left: 6px solid var(--line); background: var(--surface); }
+.card h2 { margin: 0 0 .15rem; font-size: 1.05rem; line-height: 1.25; }
+.card p { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.45; }
+.badge { justify-self: start; padding: .3rem .65rem; border: 1px solid var(--line); background: white; font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.card[data-state='admin'], .card[data-state='approved'] { border-left-color: var(--accent); }
+.card[data-state='admin'] .badge, .card[data-state='approved'] .badge { border-color: var(--accent); background: #e7f3ee; color: var(--accent-strong); }
+.card[data-state='pending'] { border-left-color: #c58a12; }
+.card[data-state='pending'] .badge { border-color: #c58a12; background: #fdf3d9; color: #7a5407; }
+.card[data-state='none'], .card[data-state='rejected'] { border-left-color: var(--danger); }
+.card[data-state='none'] .badge, .card[data-state='rejected'] .badge { border-color: var(--danger); background: #fff7ed; color: #7c2d12; }
+@media (max-width: 720px) { .card { grid-template-columns: 1fr; } }

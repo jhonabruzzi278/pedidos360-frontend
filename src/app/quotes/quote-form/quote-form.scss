@@ -1,8 +1,9 @@
-.order-form { display: grid; gap: 1rem; padding: 1.25rem; border: 1px solid var(--line); background: var(--surface); }
+.quote-form { display: grid; gap: 1.1rem; padding: clamp(1rem, 3vw, 1.75rem); border: 1px solid var(--line); background: var(--surface); box-shadow: 0 1px 0 rgba(29, 41, 37, .04); }
 label { display: grid; gap: .3rem; align-content: start; }
 label > span, legend, .line-total span { color: var(--muted); font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 label em { font-style: normal; font-weight: 500; text-transform: none; letter-spacing: 0; }
-input { width: 100%; min-height: 2.5rem; padding: .5rem .65rem; border: 1px solid var(--line); border-radius: 0; background: white; color: var(--ink); }
+input { width: 100%; min-height: 2.6rem; padding: .5rem .7rem; border: 1px solid var(--line); border-radius: 0; background: white; color: var(--ink); }
+input:hover { border-color: #b9c2bc; }
 input:focus-visible { outline: 3px solid #e19c24; outline-offset: 1px; }
 input.ng-invalid.ng-touched { border-color: var(--danger); }
 fieldset { display: grid; gap: .75rem; margin: 0; padding: 0; border: 0; }
@@ -12,15 +13,20 @@ legend { padding: 0; margin-bottom: .5rem; }
 .row.item { grid-template-columns: minmax(12rem, 3fr) minmax(6rem, 1fr) minmax(9rem, 1.4fr) minmax(7rem, 1fr) auto; align-items: start; padding-top: .75rem; border-top: 1px solid var(--line); }
 .row.item > .button { align-self: end; }
 .line-total { display: grid; gap: .3rem; align-content: start; }
-.line-total strong { display: flex; align-items: center; min-height: 2.5rem; }
+.line-total strong { display: flex; align-items: center; min-height: 2.6rem; font-variant-numeric: tabular-nums; }
 .field-error { color: var(--danger); font-size: .8rem; }
-.submit-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding-top: .75rem; border-top: 1px solid var(--line); }
-.total { margin: 0; font-size: 1.05rem; }
-.total strong { margin-left: .5rem; font-size: 1.5rem; }
-.actions { margin: 0; }
-.outcome { margin: 0; padding: .85rem 1rem; border-left: 4px solid var(--line); }
+.submit-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding-top: .9rem; border-top: 1px solid var(--line); }
+.total { display: flex; align-items: baseline; gap: .6rem; margin: 0; color: var(--muted); font-size: 1rem; }
+.total strong { color: var(--ink); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.total small { font-size: .78rem; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin: 0; }
+.link { padding: .25rem 0; border: 0; background: transparent; color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.link:hover { color: var(--accent-strong); }
+.outcome { display: grid; gap: .6rem; justify-items: start; padding: .9rem 1rem; border-left: 4px solid var(--line); }
+.outcome p { margin: 0; }
 .outcome.ok { border-color: var(--accent); background: #e7f3ee; color: var(--accent-strong); }
 .outcome.fail { border-color: var(--danger); background: #fff7ed; color: #7c2d12; }
+.pending-note { font-size: .9rem; font-weight: 700; }
 @media (max-width: 760px) {
   .row.two, .row.item { grid-template-columns: 1fr 1fr; }
   .row.item .concept { grid-column: 1 / -1; }

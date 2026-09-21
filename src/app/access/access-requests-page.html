@@ -1,0 +1,64 @@
+<section class="page" aria-labelledby="requests-title">
+  <div class="heading-row">
+    <div>
+      <p class="eyebrow">Administración</p>
+      <h1 id="requests-title">Solicitudes de acceso</h1>
+      <p class="lead">Quienes piden permiso para generar cotizaciones. Apruébalo o recházalo: el cambio se aplica al instante.</p>
+    </div>
+    <div class="side">
+      @if (!loading() && !loadFailed()) {
+        <span class="counter" [class.on]="pendingCount() > 0">{{ pendingCount() }} {{ pendingCount() === 1 ? 'pendiente' : 'pendientes' }}</span>
+      }
+      <button class="button secondary compact" type="button" (click)="load()" [disabled]="loading()">Actualizar</button>
+    </div>
+  </div>
+
+  @if (notice(); as message) {
+    <p class="notice" [class.ok]="message.ok" [class.fail]="!message.ok" [attr.role]="message.ok ? 'status' : 'alert'">{{ message.text }}</p>
+  }
+
+  @if (loading()) {
+    <p class="status" role="status">Cargando solicitudes…</p>
+  } @else if (loadFailed()) {
+    <p class="error" role="alert">No pudimos cargar las solicitudes. Actualiza la página o inténtalo en unos minutos.</p>
+  } @else if (requests().length === 0) {
+    <p class="empty">Nadie ha pedido acceso todavía.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Usuario</th><th>Solicitada</th><th>Estado</th><th class="actions-col">Acciones</th></tr>
+        </thead>
+        <tbody>
+          @for (request of requests(); track request.id) {
+            <tr>
+              <td>
+                <strong>{{ request.userName }}</strong>
+                @if (request.userEmail) { <span class="sub">{{ request.userEmail }}</span> }
+              </td>
+              <td class="nowrap">{{ request.requestedAt | date: 'dd-MM-yyyy HH:mm' }}</td>
+              <td>
+                <span class="chip" [class.ok]="request.status === 'APPROVED'" [class.warn]="request.status === 'REJECTED'" [class.wait]="request.status === 'PENDING'">{{ statusText(request.status) }}</span>
+                @if (request.decidedBy) { <span class="sub">por {{ request.decidedBy }}</span> }
+              </td>
+              <td class="actions-col">
+                @switch (request.status) {
+                  @case ('PENDING') {
+                    <button class="button compact" type="button" (click)="decide(request, 'APPROVED')" [disabled]="busyId() === request.id">Aprobar</button>
+                    <button class="button secondary compact" type="button" (click)="decide(request, 'REJECTED')" [disabled]="busyId() === request.id">Rechazar</button>
+                  }
+                  @case ('APPROVED') {
+                    <button class="button secondary compact" type="button" (click)="decide(request, 'REJECTED')" [disabled]="busyId() === request.id">Revocar acceso</button>
+                  }
+                  @default {
+                    <button class="button compact" type="button" (click)="decide(request, 'APPROVED')" [disabled]="busyId() === request.id">Aprobar</button>
+                  }
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

@@ -1,3 +1,11 @@
+export interface QuoteItem {
+  concept: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+}
+
+/** Una cotizacion (en el servicio es una orden de trabajo: por eso la ruta sigue siendo /api/work-orders). */
 export interface WorkOrder {
   id: string;
   clientId: string;
@@ -6,6 +14,10 @@ export interface WorkOrder {
   total: number;
   itemCount: number;
   calculatedSubtotal: number;
+  createdAt: string;
+  /** Quien la emitio; nulo en las cotizaciones anteriores a este dato. */
+  createdBy: string | null;
+  items: QuoteItem[];
 }
 
 export interface AuditEvent {
@@ -29,6 +41,22 @@ export interface OrderItemInput {
   readonly unitPrice: number;
 }
 
+/** NONE: el usuario nunca pidio acceso. */
+export type AccessStatus = 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED';
+export type AccessDecision = 'APPROVED' | 'REJECTED';
+
+/** Solicitud de acceso para generar cotizaciones. Con estado NONE el resto de los campos viene nulo. */
+export interface AccessRequest {
+  id: number | null;
+  userId: string | null;
+  userName: string | null;
+  userEmail: string | null;
+  status: AccessStatus;
+  requestedAt: string | null;
+  decidedAt: string | null;
+  decidedBy: string | null;
+}
+
 export interface ApiResult<T> {
   readonly route: string;
   readonly status: number;
@@ -38,6 +66,18 @@ export interface ApiResult<T> {
   /** Cuerpo JSON tal como llego (tambien en errores): es la evidencia de lo que respondio el API. */
   readonly body: unknown;
 }
+
+/** Codigo de error del cuerpo de una respuesta fallida ({status, error, message}), si lo trae. */
+export function errorCode(result: ApiResult<unknown>): string | null {
+  const body = result.body;
+  if (typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string') {
+    return body.error;
+  }
+  return null;
+}
+
+/** El BFF responde 403 con este codigo cuando falta la autorizacion del administrador para cotizar. */
+export const ACCESS_REQUIRED = 'access_required';
 
 const clpFormat = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
 

@@ -1,0 +1,44 @@
+<section class="page" aria-labelledby="diagnostics-title">
+  <div class="heading-row">
+    <div>
+      <p class="eyebrow">Diagnóstico técnico</p>
+      <h1 id="diagnostics-title">Evidencia de cada ruta.</h1>
+      <p class="lead">
+        Código y respuesta de cada llamada al API. Cada ruta pasa por API Gateway (emisor, audiencia, firma y vigencia
+        del JWT) y por el BFF (scope, rol y acceso). Los códigos esperados son 200 con token, 401 sin token o con la
+        firma alterada, y 403 cuando falta rol o acceso.
+      </p>
+    </div>
+    <a class="button secondary compact" routerLink="/perfil">Sesión y token</a>
+  </div>
+
+  <div class="actions">
+    <button class="button" type="button" (click)="runReads()" [disabled]="running()">Probar lecturas con mi sesión</button>
+    <button class="button secondary" type="button" (click)="callWithoutToken()" [disabled]="running()">Llamar sin token</button>
+    <button class="button secondary" type="button" (click)="callWithTamperedToken()" [disabled]="running()">Llamar con token alterado</button>
+  </div>
+  <p class="hint">
+    «Sin token» y «token alterado» prueban las siete rutas y todas deben responder 401. La tabla también recoge lo que
+    hizo la aplicación: por ejemplo el 201 al generar una cotización o el 403 al hacerlo sin permiso.
+  </p>
+
+  @if (results().length === 0) {
+    <p class="status" role="status">Todavía no hay llamadas registradas. Usa la aplicación o pulsa una de las pruebas.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Llamada</th><th>Código</th><th>Detalle</th><th>Respuesta</th></tr></thead>
+        <tbody>
+          @for (result of results(); track result.route) {
+            <tr>
+              <td><code>{{ result.route }}</code></td>
+              <td><span class="chip" [class.ok]="result.ok" [class.warn]="!result.ok">{{ result.status }} {{ statusLabel(result.status) }}</span></td>
+              <td>{{ result.message ?? 'Respuesta correcta' }}</td>
+              <td><details><summary>Ver JSON</summary><pre>{{ bodyText(result) }}</pre></details></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

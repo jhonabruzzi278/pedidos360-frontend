@@ -1,8 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiClient, SAMPLE_ORDER } from '../../api/api-client';
-import { ApiResult, CreateOrderRequest, OrderItemInput, WorkOrder, formatClp, statusLabel } from '../../api/api.models';
+import {
+  ACCESS_REQUIRED, AccessStatus, ApiResult, CreateOrderRequest, OrderItemInput, WorkOrder, errorCode, formatClp,
+} from '../../api/api.models';
+import { quoteNumber } from '../quote-document';
 
 const MAX_ITEMS = 50;
 /** Patentes chilenas: AB1234 (formato antiguo), BCDF12 (actual) o de moto; el servicio acepta hasta 10 caracteres. */
@@ -19,6 +22,11 @@ const MESSAGES = {
 } as const;
 
 export type FieldKind = 'text' | 'plate' | 'quantity' | 'price';
+
+export interface FormOutcome {
+  readonly ok: boolean;
+  readonly text: string;
+}
 
 type ItemGroup = FormGroup<{
   concept: FormControl<string>;
@@ -41,20 +49,40 @@ function newItem(item?: OrderItemInput): ItemGroup {
   });
 }
 
+/** Texto para el usuario: nunca codigos HTTP ni nombres de rutas. Esos quedan en la pagina de Diagnostico. */
+export function describeResult(result: ApiResult<WorkOrder>): FormOutcome {
+  if (result.ok) {
+    const number = result.data ? ` N° ${quoteNumber(result.data.id)}` : '';
+    return { ok: true, text: `Cotización${number} generada.` };
+  }
+  if (result.status === 403 && errorCode(result) === ACCESS_REQUIRED) {
+    return { ok: false, text: 'No tienes autorización para generar cotizaciones. Solicita acceso al administrador.' };
+  }
+  if (result.status === 403) return { ok: false, text: 'Tu cuenta no tiene permiso para generar cotizaciones.' };
+  if (result.status === 0) return { ok: false, text: 'No hay conexión con el servidor. Inténtalo de nuevo en unos minutos.' };
+  return { ok: false, text: `No se pudo generar la cotización${result.message ? `: ${result.message}` : '.'}` };
+}
+
 @Component({
-  selector: 'app-new-order',
+  selector: 'app-quote-form',
   imports: [ReactiveFormsModule],
-  templateUrl: './new-order.html',
-  styleUrl: './new-order.scss',
+  templateUrl: './quote-form.html',
+  styleUrl: './quote-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NewOrder {
+export class QuoteForm {
   private readonly api = inject(ApiClient);
 
-  /** Resultado del POST, para que el panel lo registre junto a las demas rutas y recargue la lista. */
+  /** Estado de la solicitud de acceso del usuario: decide si se ofrece pedirlo o se avisa que esta pendiente. */
+  readonly accessStatus = input<AccessStatus>('NONE');
+  /** Resultado del POST, para que la pagina abra la vista previa y recargue la lista. */
   readonly created = output<ApiResult<WorkOrder>>();
+  /** El usuario pulso "Solicitar acceso al administrador" tras ser rechazado por falta de permiso. */
+  readonly accessRequested = output<void>();
+
   readonly sending = signal(false);
-  readonly outcome = signal<{ readonly ok: boolean; readonly text: string } | null>(null);
+  readonly outcome = signal<FormOutcome | null>(null);
+  readonly accessRequired = signal(false);
 
   readonly maxItems = MAX_ITEMS;
   readonly formatClp = formatClp;
@@ -68,7 +96,7 @@ export class NewOrder {
   });
 
   private readonly formValue = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
-  /** Subtotal de cada renglon y total de la orden, como los calcula el servicio (el total no se envia). */
+  /** Subtotal de cada renglon y total de la cotizacion, como los calcula el servicio (el total no se envia). */
   readonly subtotals = computed(() =>
     (this.formValue().items ?? []).map((item) => Math.round((item.quantity ?? 0) * (item.unitPrice ?? 0))),
   );
@@ -91,19 +119,26 @@ export class NewOrder {
     });
     this.form.markAsUntouched();
     this.outcome.set(null);
+    this.accessRequired.set(false);
+  }
+
+  askForAccess(): void {
+    this.accessRequested.emit();
   }
 
   async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.outcome.set({ ok: false, text: 'Revisa los campos marcados antes de crear la orden.' });
+      this.outcome.set({ ok: false, text: 'Revisa los campos marcados antes de generar la cotización.' });
       return;
     }
     this.sending.set(true);
     this.outcome.set(null);
+    this.accessRequired.set(false);
     const result = await this.api.createOrder(this.request());
     this.sending.set(false);
-    this.outcome.set(this.describe(result));
+    this.outcome.set(describeResult(result));
+    this.accessRequired.set(!result.ok && result.status === 403 && errorCode(result) === ACCESS_REQUIRED);
     if (result.ok) this.clear();
     this.created.emit(result);
   }
@@ -114,14 +149,6 @@ export class NewOrder {
     if (control.hasError('required')) return MESSAGES.required;
     if (kind !== 'text') return MESSAGES[kind];
     return control.hasError('maxlength') ? MESSAGES.maxlength : null;
-  }
-
-  private describe(result: ApiResult<WorkOrder>): { ok: boolean; text: string } {
-    if (!result.ok) {
-      return { ok: false, text: `${result.status} ${statusLabel(result.status)}: ${result.message ?? 'No se pudo crear la orden.'}` };
-    }
-    const order = result.data;
-    return { ok: true, text: order ? `Orden ${order.id} creada por ${formatClp(order.total)}.` : 'Orden creada.' };
   }
 
   private request(): CreateOrderRequest {
@@ -138,7 +165,7 @@ export class NewOrder {
     };
   }
 
-  /** Deja el formulario listo para la siguiente orden: un renglon vacio y los datos del cliente en blanco. */
+  /** Deja el formulario listo para la siguiente cotizacion: un renglon vacio y los datos del cliente en blanco. */
   private clear(): void {
     this.replaceItems([]);
     this.form.controls.clientId.reset('');

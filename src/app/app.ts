@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './auth/auth.service';
 
@@ -10,7 +10,7 @@ import { AuthService } from './auth/auth.service';
 })
 export class App implements OnInit {
   readonly auth = inject(AuthService);
-  readonly modeLabel = this.auth.mode === 'entra' ? 'Microsoft Entra ID' : 'Entorno local';
+  readonly isAdmin = computed(() => this.auth.session()?.roles.includes('admin') ?? false);
 
   ngOnInit(): void {
     // Procesa la respuesta de la redireccion de login y carga la sesion antes de que el usuario navegue.

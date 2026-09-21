@@ -10,7 +10,7 @@ export class Login {
   constructor() {
     // Al volver de Entra ID (o si ya hay sesion) se pasa directo a las ordenes.
     effect(() => {
-      if (this.auth.authenticated()) void this.router.navigateByUrl('/ordenes');
+      if (this.auth.authenticated()) void this.router.navigateByUrl('/cotizaciones');
     });
   }
 }

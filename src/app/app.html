@@ -6,16 +6,29 @@
   </a>
   <nav class="site-nav" aria-label="Principal">
     @if (auth.authenticated()) {
-      <a routerLink="/ordenes" routerLinkActive="active">Órdenes</a>
-      <a routerLink="/perfil" routerLinkActive="active">Perfil y token</a>
+      <a routerLink="/cotizaciones" routerLinkActive="active">Cotizaciones</a>
+      @if (isAdmin()) {
+        <a routerLink="/solicitudes" routerLinkActive="active">Solicitudes de acceso</a>
+      }
     }
   </nav>
   <div class="session">
-    <span class="environment">{{ modeLabel }}</span>
     @if (auth.session(); as session) {
       <span class="user" [title]="session.username">{{ session.name }}</span>
+      @if (isAdmin()) {
+        <span class="role-chip">Administrador</span>
+      }
       <button class="button secondary compact" type="button" (click)="logout()">Cerrar sesión</button>
     }
   </div>
 </header>
 <main id="main-content"><router-outlet /></main>
+@if (auth.authenticated()) {
+  <footer class="site-footer">
+    <span>Pedidos360 · Cotizaciones para talleres</span>
+    <nav aria-label="Herramientas técnicas">
+      <a routerLink="/diagnostico" routerLinkActive="active">Diagnóstico técnico</a>
+      <a routerLink="/perfil" routerLinkActive="active">Sesión y token</a>
+    </nav>
+  </footer>
+}

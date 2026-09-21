@@ -43,7 +43,7 @@ export class AuthService {
         );
         sessionStorage.setItem(LOCAL_TOKEN_KEY, response.accessToken);
         await this.reload();
-        await this.router.navigateByUrl('/ordenes');
+        await this.router.navigateByUrl('/cotizaciones');
         return;
       }
       await firstValueFrom(this.msal.loginRedirect({ scopes: [...environment.entra.apiScopes] }));

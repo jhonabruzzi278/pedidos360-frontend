@@ -31,6 +31,11 @@
             ],
             "styles": [
               "src/styles.scss"
+            ],
+            "externalDependencies": [
+              "canvg",
+              "html2canvas",
+              "dompurify"
             ]
           },
           "configurations": {

@@ -1,0 +1,60 @@
+@if (admin()) {
+  <section class="card" data-state="admin" aria-label="Tu acceso">
+    <span class="badge">Administrador</span>
+    <div>
+      <h2>Puedes generar cotizaciones</h2>
+      <p>Como administrador también decides quién más puede hacerlo.</p>
+    </div>
+    <a class="button secondary compact" routerLink="/solicitudes">Ver solicitudes de acceso</a>
+  </section>
+} @else {
+  @let current = access();
+  @if (current === null) {
+    <section class="card" data-state="loading" aria-label="Tu acceso" aria-busy="true">
+      <span class="badge">Tu acceso</span>
+      <p>Consultando tu acceso…</p>
+    </section>
+  } @else {
+    @switch (current.status) {
+      @case ('APPROVED') {
+        <section class="card" data-state="approved" aria-label="Tu acceso">
+          <span class="badge">Acceso concedido</span>
+          <div>
+            <h2>Ya puedes generar cotizaciones</h2>
+            <p>Lo autorizó {{ current.decidedBy ?? 'el administrador' }}.</p>
+          </div>
+        </section>
+      }
+      @case ('PENDING') {
+        <section class="card" data-state="pending" aria-label="Tu acceso">
+          <span class="badge">Solicitud enviada</span>
+          <div>
+            <h2>Esperando la aprobación del administrador</h2>
+            <p>Apenas la revise podrás generar cotizaciones.</p>
+          </div>
+          <button class="button secondary compact" type="button" (click)="refreshed.emit()" [disabled]="busy()">Actualizar estado</button>
+        </section>
+      }
+      @case ('REJECTED') {
+        <section class="card" data-state="rejected" aria-label="Tu acceso">
+          <span class="badge">Solicitud rechazada</span>
+          <div>
+            <h2>No tienes acceso para generar cotizaciones</h2>
+            <p>El administrador no aprobó tu solicitud. Puedes volver a pedirlo.</p>
+          </div>
+          <button class="button compact" type="button" (click)="requested.emit()" [disabled]="busy()">Volver a solicitar</button>
+        </section>
+      }
+      @default {
+        <section class="card" data-state="none" aria-label="Tu acceso">
+          <span class="badge">Sin acceso</span>
+          <div>
+            <h2>Aún no puedes generar cotizaciones</h2>
+            <p>Necesitas la autorización de un administrador.</p>
+          </div>
+          <button class="button compact" type="button" (click)="requested.emit()" [disabled]="busy()">Solicitar acceso al administrador</button>
+        </section>
+      }
+    }
+  }
+}

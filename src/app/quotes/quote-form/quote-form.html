@@ -1,4 +1,4 @@
-<form class="order-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+<form class="quote-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
   <div class="row two">
     <label>
       <span>Cliente</span>
@@ -6,13 +6,13 @@
       @if (errorOf(form.controls.clientId); as message) { <small class="field-error">{{ message }}</small> }
     </label>
     <label>
-      <span>Patente</span>
+      <span>Patente del vehículo</span>
       <input formControlName="licensePlate" type="text" maxlength="7" autocomplete="off" placeholder="BRTC63" />
       @if (errorOf(form.controls.licensePlate, 'plate'); as message) { <small class="field-error">{{ message }}</small> }
     </label>
   </div>
   <label>
-    <span>Descripción del trabajo <em>(opcional)</em></span>
+    <span>Trabajo a realizar <em>(opcional)</em></span>
     <input formControlName="description" type="text" maxlength="200" autocomplete="off" placeholder="Cambio de pastillas de freno delanteras" />
     @if (errorOf(form.controls.description); as message) { <small class="field-error">{{ message }}</small> }
   </label>
@@ -47,14 +47,23 @@
   </fieldset>
 
   <div class="submit-row">
-    <p class="total">Total de la orden <strong>{{ formatClp(total()) }}</strong></p>
+    <p class="total">Total <strong>{{ formatClp(total()) }}</strong><small>IVA incluido</small></p>
     <div class="actions">
-      <button class="button secondary" type="button" (click)="loadExample()">Cargar ejemplo</button>
-      <button class="button" type="submit" [disabled]="sending()">{{ sending() ? 'Creando…' : 'Crear orden' }}</button>
+      <button class="link" type="button" (click)="loadExample()">Usar datos de ejemplo</button>
+      <button class="button" type="submit" [disabled]="sending()">{{ sending() ? 'Generando…' : 'Generar cotización' }}</button>
     </div>
   </div>
 
   @if (outcome(); as result) {
-    <p class="outcome" [class.ok]="result.ok" [class.fail]="!result.ok" [attr.role]="result.ok ? 'status' : 'alert'">{{ result.text }}</p>
+    <div class="outcome" [class.ok]="result.ok" [class.fail]="!result.ok" [attr.role]="result.ok ? 'status' : 'alert'">
+      <p>{{ result.text }}</p>
+      @if (accessRequired()) {
+        @if (accessStatus() === 'PENDING') {
+          <p class="pending-note">Tu solicitud ya fue enviada y está pendiente de aprobación.</p>
+        } @else {
+          <button class="button compact" type="button" (click)="askForAccess()">Solicitar acceso al administrador</button>
+        }
+      }
+    </div>
   }
 </form>

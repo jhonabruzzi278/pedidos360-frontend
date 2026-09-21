@@ -20,10 +20,10 @@ describe('Login (local profile)', () => {
     const fixture = TestBed.createComponent(Login);
     fixture.detectChanges();
     const buttons = Array.from<HTMLButtonElement>(fixture.nativeElement.querySelectorAll('button')).map((b) => b.textContent?.trim());
-    expect(buttons).toEqual(['Entrar como viewer', 'Entrar como admin']);
+    expect(buttons).toEqual(['Entrar como usuario', 'Entrar como administrador']);
   });
 
-  it('requests an admin token and goes to the orders page', async () => {
+  it('requests an admin token and goes to the quotes page', async () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     const http = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(Login);
@@ -35,7 +35,7 @@ describe('Login (local profile)', () => {
       .flush({ accessToken: makeJwt({ sub: 'u', roles: ['admin'], scope: 'orders.read', exp: secondsFromNow(600) }) });
     await fixture.whenStable();
 
-    expect(navigate).toHaveBeenCalledWith('/ordenes');
+    expect(navigate).toHaveBeenCalledWith('/cotizaciones');
     http.verify();
   });
 
@@ -51,5 +51,24 @@ describe('Login (local profile)', () => {
 
     expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('No fue posible iniciar sesión');
     http.verify();
+  });
+});
+
+describe('Login (copy)', () => {
+  beforeEach(async () => {
+    sessionStorage.clear();
+    await TestBed.configureTestingModule({
+      imports: [Login],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: MsalService, useValue: {} }],
+    }).compileComponents();
+  });
+
+  it('presents a product for workshops, not the authentication mechanism', () => {
+    const fixture = TestBed.createComponent(Login);
+    fixture.detectChanges();
+    const text: string = fixture.nativeElement.textContent;
+    expect(text).toContain('Cotizaciones claras para tus clientes');
+    expect(text).toContain('Solicita acceso');
+    expect(text).not.toMatch(/PKCE|OpenID|Authorization Code|JWT|API Gateway|Entra/i);
   });
 });
